@@ -1,95 +1,62 @@
-html, body {
+body, html {
   margin: 0;
   padding: 0;
   height: 100%;
-  overflow: hidden;
+  width: 100%;
   font-family: 'Press Start 2P', monospace;
-  background: #000;
-  color: #fff;
+  background: black;
+  color: #f8a5c2;
 }
 
 #map {
   position: absolute;
   top: 0;
-  left: 0;
-  height: 100%;
+  bottom: 0;
   width: 100%;
   z-index: 0;
 }
 
-canvas {
-  position: absolute !important;
-  top: 0;
-  left: 0;
-  z-index: 1;
-  pointer-events: none !important; /* don't block map */
-}
-
-#ui-panel {
+#ui {
   position: absolute;
   top: 20px;
   left: 20px;
-  width: 260px;
-  background: rgba(0,0,0,0.85);
+  background: rgba(0, 0, 0, 0.8);
   border: 2px solid #f8a5c2;
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 15px;
-  box-shadow: 0 0 12px #f8a5c2;
+  color: #f8a5c2;
   z-index: 10;
+  width: 270px;
 }
 
-#ui-panel h1 {
+h1 {
   font-size: 12px;
-  color: #f8a5c2;
-  text-align: center;
   margin-bottom: 10px;
-  text-shadow: 0 0 5px #f8a5c2;
+  text-align: center;
+  color: #a0f0f0;
 }
 
 label {
-  font-size: 10px;
-  margin-top: 10px;
-  color: #a0f0f0;
+  font-size: 8px;
   display: block;
+  margin-top: 5px;
 }
 
-select, input, textarea {
+select, input, button {
   width: 100%;
-  background: #111;
-  color: #fff;
+  margin-top: 4px;
+  margin-bottom: 8px;
+  padding: 6px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  background: #222;
+  color: #f8a5c2;
   border: 1px solid #f8a5c2;
   border-radius: 4px;
-  font-family: 'Press Start 2P', monospace;
-  font-size: 10px;
-  padding: 4px;
-  box-sizing: border-box;
-}
-
-textarea {
-  height: 50px;
-  resize: none;
-}
-
-.buttons {
-  margin-top: 10px;
-  display: flex;
-  justify-content: space-between;
-}
-
-button {
-  flex: 1;
-  margin: 0 3px;
-  background: #f8a5c2;
-  color: #000;
-  font-family: 'Press Start 2P', monospace;
-  font-size: 10px;
-  padding: 6px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.2s;
 }
 
 button:hover {
-  background: #a0f0f0;
+  background: #f8a5c2;
+  color: #000;
+  cursor: pointer;
 }
