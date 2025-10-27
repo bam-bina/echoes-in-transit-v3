@@ -1,142 +1,122 @@
-let map, geoData;
-let routes = [], currentRide = null;
-let blip1, blip2, ding;
-const GEOJSON_URL = "sydney_train_routes_named.json"; // your merged file
+let map;
+let trainData;
+let messages = [];
+let ding;
 
 function preload() {
-  blip1 = new p5.Oscillator('square'); blip1.amp(0.05); blip1.freq(600);
-  blip2 = new p5.Oscillator('triangle'); blip2.amp(0.05); blip2.freq(300);
-  ding  = new p5.Oscillator('sine'); ding.amp(0.05); ding.freq(800);
+  trainData = loadJSON('sydney_train_routes_named.json');
+  ding = new p5.Oscillator('sine');
 }
 
 function setup() {
-  // Create Leaflet map
-  const mymap = L.map('map').setView([-33.87,151.21], 10);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  noCanvas();
+
+  ding.start();
+  ding.amp(0);
+
+  map = L.map('map').setView([-33.87, 151.21], 10);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18,
     attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(mymap);
-  map = mymap;
+  }).addTo(map);
 
-  // Create p5 canvas overlay
-  const myCanvas = createCanvas(window.innerWidth, window.innerHeight);
-  myCanvas.position(0,0);
-  myCanvas.style('z-index','1');
-  myCanvas.style('pointer-events','none'); // don't block map
-  noStroke();
-
-  // Load the full Sydney train routes
-  loadJSON(GEOJSON_URL, data => {
-    geoData = data;
-    setupUI();
-  });
+  setupUI();
 }
 
-function setupUI(){
-  let lineSel = select('#lineSelect');
-  Object.keys(geoData.features).forEach((_, i) => {
-    let f = geoData.features[i];
-    let id = f.properties.route_id || f.properties.route_short_name || `Line ${i}`;
-    let name = f.properties.route_long_name || id;
-    lineSel.elt.add(new Option(`${id} — ${name}`, id));
-  });
+function setupUI() {
+  const ui = select('#ui');
+  const lineSel = select('#lineSelect');
+  const startSel = select('#startSelect');
+  const endSel = select('#endSelect');
 
-  lineSel.changed(()=>{
-    blip2.start(); blip2.stop(0.1);
-    updateStations();
-  });
+  getLineNames().forEach(line => lineSel.elt.add(new Option(line, line)));
 
-  select('#sendBtn').mousePressed(()=>{
-    ding.start(); ding.stop(0.2);
-    addRoute();
-  });
-  select('#clearBtn').mousePressed(()=>{ routes = []; });
-  select('#rideBtn').mousePressed(()=>{ if(routes.length>0){ currentRide=routes[0]; }});
+  lineSel.changed(() => updateStations(lineSel.value(), startSel, endSel));
+  updateStations(lineSel.value(), startSel, endSel);
 
-  updateStations();
-}
+  select('#sendBtn').mousePressed(() => {
+    const msg = select('#msgInput').value().trim();
+    const line = lineSel.value();
+    const start = startSel.value();
+    const end = endSel.value();
 
-function updateStations(){
-  let lineSel = select('#lineSelect').value();
-  let startSel = select('#startSelect');
-  let endSel = select('#endSelect');
-  startSel.elt.innerHTML='';
-  endSel.elt.innerHTML='';
-
-  const feature = geoData.features.find(f =>
-    (f.properties.route_id || f.properties.route_short_name) === lineSel
-  );
-  if (!feature) return;
-
-  const stops = feature.properties.stop_names || [];
-  stops.forEach((s,i)=>{
-    startSel.elt.add(new Option(s,i));
-    endSel.elt.add(new Option(s,i));
-  });
-}
-
-function addRoute(){
-  let lineSel = select('#lineSelect').value();
-  let s = int(select('#startSelect').value());
-  let e = int(select('#endSelect').value());
-  let msg = select('#msgInput').value();
-  if (e <= s || !msg) return;
-
-  const feature = geoData.features.find(f =>
-    (f.properties.route_id || f.properties.route_short_name) === lineSel
-  );
-  if (!feature) return;
-
-  let path = feature.geometry.coordinates.slice(s, e + 1);
-  routes.push({ path: path, msg: msg, t: 0 });
-  select('#msgInput').value('');
-}
-
-function draw(){
-  clear();
-  for (let r of routes) {
-    drawPixelRoute(r);
-    r.t += 0.005;
-    if (r.t > 1) r.t = 0;
-  }
-  if (currentRide) rideRoute(currentRide);
-}
-
-function drawPixelRoute(r){
-  push(); fill('#f8a5c2');
-  for (let i = 0; i < r.path.length - 1; i++) {
-    let p1 = map.latLngToContainerPoint(L.latLng(r.path[i][1], r.path[i][0]));
-    let p2 = map.latLngToContainerPoint(L.latLng(r.path[i + 1][1], r.path[i + 1][0]));
-    let steps = int(dist(p1.x,p1.y,p2.x,p2.y)/8);
-    for (let j = 0; j < steps; j++) {
-      let x = lerp(p1.x,p2.x,j/steps);
-      let y = lerp(p1.y,p2.y,j/steps);
-      rect(x,y,2,2);
+    if (msg && start && end) {
+      playSound();
+      addMessage(line, start, end, msg);
+      select('#msgInput').value('');
     }
+  });
+
+  select('#clearBtn').mousePressed(() => {
+    messages = [];
+    map.eachLayer(layer => {
+      if (layer instanceof L.Marker || layer instanceof L.Polyline) map.removeLayer(layer);
+    });
+  });
+}
+
+// ---------- Flexible JSON Handlers ----------
+function getLineNames() {
+  if (Array.isArray(trainData)) {
+    return trainData.map(l => l.line || l.name || 'Unnamed Line');
+  } else if (trainData.routes) {
+    return Object.keys(trainData.routes);
+  } else {
+    return Object.keys(trainData);
   }
-  let tpos = routePointAt(r.path, r.t);
-  if (tpos) { fill('#a0f0f0'); rect(tpos.x,tpos.y,4,4); }
-  pop();
 }
 
-function routePointAt(path, t){
-  if (path.length < 2) return null;
-  let seg = (path.length - 1) * t;
-  let i = floor(seg);
-  let local = seg - i;
-  if (i >= path.length - 1) i = path.length - 2;
-  let p1 = map.latLngToContainerPoint(L.latLng(path[i][1], path[i][0]));
-  let p2 = map.latLngToContainerPoint(L.latLng(path[i + 1][1], path[i + 1][0]));
-  return { x: lerp(p1.x,p2.x,local), y: lerp(p1.y,p2.y,local) };
-}
+function updateStations(line, startSel, endSel) {
+  startSel.elt.innerHTML = '';
+  endSel.elt.innerHTML = '';
 
-function rideRoute(r){
-  push(); fill('#f8a5c2'); textSize(10); textAlign(CENTER);
-  let tpos = routePointAt(r.path, r.t);
-  if (tpos) {
-    let chars = int(frameCount / 5) % (r.msg.length + 1);
-    text(r.msg.substring(0, chars), tpos.x, tpos.y - 10);
+  let stations = [];
+
+  if (Array.isArray(trainData)) {
+    const lineObj = trainData.find(l => l.line === line || l.name === line);
+    stations = lineObj ? lineObj.stations || lineObj.stops || [] : [];
+  } else if (trainData.routes && trainData.routes[line]) {
+    stations = trainData.routes[line].stations || trainData.routes[line].stops || [];
+  } else {
+    stations = trainData[line] || [];
   }
-  pop();
+
+  stations.forEach(station => {
+    const name = station.name || station[0] || 'Unknown';
+    startSel.elt.add(new Option(name, name));
+    endSel.elt.add(new Option(name, name));
+  });
 }
 
-function windowResized(){ resizeCanvas(window.innerWidth, window.innerHeight); }
+function addMessage(line, startName, endName, text) {
+  let stations = [];
+
+  if (Array.isArray(trainData)) {
+    const lineObj = trainData.find(l => l.line === line || l.name === line);
+    stations = lineObj ? lineObj.stations || [] : [];
+  } else if (trainData.routes && trainData.routes[line]) {
+    stations = trainData.routes[line].stations || [];
+  } else {
+    stations = trainData[line] || [];
+  }
+
+  const startIdx = stations.findIndex(s => s.name === startName);
+  const endIdx = stations.findIndex(s => s.name === endName);
+  if (startIdx < 0 || endIdx < 0 || startIdx >= endIdx) return;
+
+  const segment = stations.slice(startIdx, endIdx + 1);
+  const coords = segment.map(s => [s.lat || s.latitude, s.lng || s.longitude]);
+
+  const routeLine = L.polyline(coords, { color: '#f8a5c2', weight: 3 }).addTo(map);
+  const mid = coords[Math.floor(coords.length / 2)];
+  const marker = L.marker(mid).addTo(map);
+  marker.bindPopup(`<div style="font-family:'Press Start 2P';font-size:10px;">${text}</div>`);
+
+  messages.push({ line, startName, endName, text });
+}
+
+function playSound() {
+  ding.amp(0.3, 0.05);
+  ding.freq(880);
+  setTimeout(() => ding.amp(0, 0.5), 150);
+}
