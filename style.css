@@ -2,19 +2,27 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  width: 100%;
   overflow: hidden;
-  background: #000;
   font-family: 'Press Start 2P', monospace;
+  background: #000;
   color: #fff;
 }
 
 #map {
   position: absolute;
-  top: 0; left: 0;
-  width: 100%;
+  top: 0;
+  left: 0;
   height: 100%;
+  width: 100%;
   z-index: 0;
+}
+
+canvas {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  pointer-events: none !important; /* don't block map */
 }
 
 #ui-panel {
@@ -22,44 +30,42 @@ html, body {
   top: 20px;
   left: 20px;
   width: 260px;
-  background: rgba(0,0,0,0.8);
-  padding: 15px;
+  background: rgba(0,0,0,0.85);
   border: 2px solid #f8a5c2;
   border-radius: 10px;
-  z-index: 2;
+  padding: 15px;
   box-shadow: 0 0 12px #f8a5c2;
+  z-index: 10;
 }
 
 #ui-panel h1 {
-  font-size: 14px;
+  font-size: 12px;
   color: #f8a5c2;
   text-align: center;
   margin-bottom: 10px;
   text-shadow: 0 0 5px #f8a5c2;
 }
 
-#ui-panel label {
+label {
   font-size: 10px;
-  display: block;
   margin-top: 10px;
-  margin-bottom: 3px;
   color: #a0f0f0;
+  display: block;
 }
 
-#ui-panel select,
-#ui-panel input,
-#ui-panel textarea {
+select, input, textarea {
   width: 100%;
   background: #111;
-  border: 1px solid #f8a5c2;
   color: #fff;
-  font-size: 10px;
-  padding: 4px;
+  border: 1px solid #f8a5c2;
   border-radius: 4px;
   font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  padding: 4px;
+  box-sizing: border-box;
 }
 
-#ui-panel textarea {
+textarea {
   height: 50px;
   resize: none;
 }
@@ -72,7 +78,7 @@ html, body {
 
 button {
   flex: 1;
-  margin: 0 2px;
+  margin: 0 3px;
   background: #f8a5c2;
   color: #000;
   font-family: 'Press Start 2P', monospace;
@@ -87,5 +93,3 @@ button {
 button:hover {
   background: #a0f0f0;
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
