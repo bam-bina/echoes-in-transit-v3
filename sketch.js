@@ -1,6 +1,6 @@
 // Echoes in Transit — GeoJSON + Firebase + Sounds
 
-const GEOJSON_URL = 'sydney_train_routes.json';
+const GEOJSON_URL = 'sydney_train_routes_named.json';
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBva3BFLhJhytiHAcIjgIYF6aSepG-a6v8",
   authDomain: "echoes-in-transit-v2.firebaseapp.com",
