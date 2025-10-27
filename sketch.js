@@ -1,7 +1,18 @@
-// Echoes in Transit — GeoJSON + Firebase + Sounds
+<!-- ===========================
+ Echoes in Transit (Firebase + GeoJSON + p5.js + Leaflet)
+=========================== -->
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore.js"></script>
 
-const GEOJSON_URL = 'sydney_train_routes_named.json';
-const FIREBASE_CONFIG = {
+<script>
+let map, geoData;
+let routes = [];
+let currentRide = null;
+let blip1, blip2, ding;
+const GEOJSON_URL = "sydney_train_routes_named.json"; // your merged dataset
+
+const firebaseConfig = {
   apiKey: "AIzaSyBva3BFLhJhytiHAcIjgIYF6aSepG-a6v8",
   authDomain: "echoes-in-transit-v2.firebaseapp.com",
   projectId: "echoes-in-transit-v2",
@@ -10,147 +21,167 @@ const FIREBASE_CONFIG = {
   appId: "1:252548572349:web:2f172fbd17a3b6931c43d4"
 };
 
-let map, geoData, firestore, osc;
-let routes = [];
-let lineSelect, startSelect, endSelect, nameInput, msgInput;
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
+// --- Sound preload ---
+function preload() {
+  blip1 = new p5.Oscillator('square'); blip1.amp(0.05); blip1.freq(600);
+  blip2 = new p5.Oscillator('triangle'); blip2.amp(0.05); blip2.freq(300);
+  ding  = new p5.Oscillator('sine'); ding.amp(0.05); ding.freq(800);
+}
+
+// --- Setup map and UI ---
 function setup() {
-  // Leaflet Map
-  map = L.map('map').setView([-33.8688, 151.2093], 11);
+  const mymap = L.map('map').setView([-33.87, 151.21], 10);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; CARTO & OpenStreetMap'
-  }).addTo(map);
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(mymap);
+  map = mymap;
 
-  let cnv = createCanvas(windowWidth, windowHeight);
-  cnv.position(0, 0);
-  cnv.style('z-index', '2000');
-  canvas.style('pointer-events', 'none');
+  const myCanvas = createCanvas(window.innerWidth, window.innerHeight);
+  myCanvas.position(0, 0);
+  myCanvas.style('z-index', '1');
+  noStroke();
 
-  osc = new p5.Oscillator('square');
-  osc.amp(0.05);
-  osc.freq(600);
+  loadJSON(GEOJSON_URL, data => {
+    geoData = data;
+    setupUI();
+    listenForRoutes();
+  });
+}
 
-  // Firebase init
-  firebase.initializeApp(FIREBASE_CONFIG);
-  firestore = firebase.firestore();
-  firestore.collection("messages").orderBy("timestamp").onSnapshot(snapshot => {
+// --- Setup dropdowns and buttons ---
+function setupUI() {
+  const lineSel = select("#lineSelect");
+  const startSel = select("#startSelect");
+  const endSel = select("#endSelect");
+  const nameInput = select("#nameInput");
+  const msgInput = select("#msgInput");
+
+  geoData.features.forEach(f => {
+    let id = f.properties.route_id || f.properties.route_short_name || "Unknown";
+    let name = f.properties.route_long_name || id;
+    lineSel.elt.add(new Option(`${id} — ${name}`, id));
+  });
+
+  lineSel.changed(() => { blip2.start(); blip2.stop(0.1); updateStations(); });
+  select("#sendBtn").mousePressed(() => {
+    ding.start(); ding.stop(0.2);
+    saveRoute(nameInput.value(), msgInput.value());
+  });
+  select("#clearBtn").mousePressed(() => { routes = []; });
+  select("#rideBtn").mousePressed(() => { if (routes.length > 0) currentRide = routes[0]; });
+}
+
+// --- Populate start/end station menus ---
+function updateStations() {
+  const lineSel = select("#lineSelect").value();
+  const startSel = select("#startSelect");
+  const endSel = select("#endSelect");
+  startSel.elt.innerHTML = "";
+  endSel.elt.innerHTML = "";
+
+  const feature = geoData.features.find(f => {
+    const id = f.properties.route_id || f.properties.route_short_name;
+    return id === lineSel;
+  });
+
+  if (feature && feature.properties.stop_names) {
+    feature.properties.stop_names.forEach((stop, i) => {
+      startSel.elt.add(new Option(stop, i));
+      endSel.elt.add(new Option(stop, i));
+    });
+  }
+}
+
+// --- Save to Firestore ---
+function saveRoute(name, msg) {
+  const lineSel = select("#lineSelect").value();
+  const s = int(select("#startSelect").value());
+  const e = int(select("#endSelect").value());
+  if (e <= s) return;
+
+  const feature = geoData.features.find(f => {
+    const id = f.properties.route_id || f.properties.route_short_name;
+    return id === lineSel;
+  });
+  if (!feature) return;
+
+  const path = feature.geometry.type === "LineString"
+    ? feature.geometry.coordinates.slice(s, e + 1)
+    : feature.geometry.coordinates.flat().slice(s, e + 1);
+
+  const routeObj = { path, msg, name, line: lineSel, t: 0, timestamp: Date.now() };
+
+  db.collection("routes").add(routeObj)
+    .then(() => console.log("✅ Saved route"))
+    .catch(err => console.error("❌ Firestore Error:", err));
+}
+
+// --- Listen for new Firestore entries (real-time updates) ---
+function listenForRoutes() {
+  db.collection("routes").orderBy("timestamp").onSnapshot(snapshot => {
     routes = [];
     snapshot.forEach(doc => routes.push(doc.data()));
   });
-
-  setupUI();
-
-  // Load GeoJSON
-  fetch(GEOJSON_URL)
-    .then(r => r.json())
-    .then(j => { geoData = j; populateLineSelect(); })
-    .catch(e => console.error("GeoJSON load failed:", e));
 }
 
-function setupUI() {
-  lineSelect = select('#lineSelect');
-  startSelect = select('#startSelect');
-  endSelect = select('#endSelect');
-  nameInput = select('#nameInput');
-  msgInput = select('#msgInput');
-
-  select('#sendBtn').mousePressed(sendMessage);
-  select('#clearBtn').mousePressed(() => routes = []);
-}
-
-function populateLineSelect() {
-  lineSelect.elt.innerHTML = '';
-  geoData.features.forEach((f, i) => {
-    const lineName = f.properties.route_long_name || f.properties.route_short_name || `Line ${i + 1}`;
-    lineSelect.elt.add(new Option(lineName, i));
-  });
-  lineSelect.changed(updateStations);
-  updateStations();
-}
-
-function updateStations() {
-  startSelect.elt.innerHTML = '';
-  endSelect.elt.innerHTML = '';
-  const f = geoData.features[int(lineSelect.value())];
-  if (!f) return;
-
-  const coords = flattenCoords(f.geometry);
-  const samples = samplePoints(coords, Math.min(15, coords.length));
-
-  samples.forEach((pt, i) => {
-    const station = f.properties.stop_names?.[i] || `Station ${i + 1}`;
-    const val = `${pt[0]},${pt[1]}`;
-    startSelect.elt.add(new Option(station, val));
-    endSelect.elt.add(new Option(station, val));
-  });
-}
-
-function flattenCoords(g) {
-  if (g.type === 'LineString') return g.coordinates;
-  if (g.type === 'MultiLineString') return g.coordinates.flat();
-  return [];
-}
-
-function samplePoints(coords, n) {
-  if (coords.length <= n) return coords.slice();
-  const out = [];
-  for (let i = 0; i < n; i++) {
-    let idx = floor(map(i, 0, n - 1, 0, coords.length - 1));
-    out.push(coords[idx]);
-  }
-  return out;
-}
-
-function sendMessage() {
-  const start = startSelect.value().split(',').map(Number);
-  const end = endSelect.value().split(',').map(Number);
-  const name = nameInput.value() || 'Anonymous';
-  const msg = msgInput.value();
-  if (!geoData || !msg) return;
-
-  const lineIdx = int(lineSelect.value());
-  const f = geoData.features[lineIdx];
-  const coords = flattenCoords(f.geometry);
-  const sIdx = nearestIndex(coords, start);
-  const eIdx = nearestIndex(coords, end);
-  if (sIdx >= eIdx) return;
-
-  const path = coords.slice(sIdx, eIdx + 1);
-  firestore.collection("messages").add({
-    sender: name,
-    msg: msg,
-    coords: path,
-    timestamp: Date.now()
-  });
-
-  osc.start();
-  setTimeout(() => osc.stop(), 100);
-  msgInput.value('');
-}
-
-function nearestIndex(coords, t) {
-  let best = 0, bestD = 1e9;
-  coords.forEach((c, i) => {
-    const d = (c[0] - t[0]) ** 2 + (c[1] - t[1]) ** 2;
-    if (d < bestD) { bestD = d; best = i; }
-  });
-  return best;
-}
-
+// --- Animation loop ---
 function draw() {
   clear();
-  routes.forEach(r => {
-    if (!r.coords) return;
-    for (let i = 0; i < r.coords.length - 1; i++) {
-      let p1 = map.latLngToContainerPoint(L.latLng(r.coords[i][1], r.coords[i][0]));
-      let p2 = map.latLngToContainerPoint(L.latLng(r.coords[i + 1][1], r.coords[i + 1][0]));
-      stroke('#f8a5c2');
-      strokeWeight(2);
-      line(p1.x, p1.y, p2.x, p2.y);
-    }
-  });
+  for (let r of routes) {
+    drawPixelRoute(r);
+    r.t += 0.005;
+    if (r.t > 1) r.t = 0;
+  }
+  if (currentRide) rideRoute(currentRide);
 }
 
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
+// --- Draw glowing pixel path ---
+function drawPixelRoute(r) {
+  push();
+  fill('#f8a5c2');
+  for (let i = 0; i < r.path.length - 1; i++) {
+    const p1 = map.latLngToContainerPoint(L.latLng(r.path[i][1], r.path[i][0]));
+    const p2 = map.latLngToContainerPoint(L.latLng(r.path[i + 1][1], r.path[i + 1][0]));
+    const steps = int(dist(p1.x, p1.y, p2.x, p2.y) / 8);
+    for (let j = 0; j < steps; j++) {
+      const x = lerp(p1.x, p2.x, j / steps);
+      const y = lerp(p1.y, p2.y, j / steps);
+      rect(x, y, 2, 2);
+    }
+  }
+  const tpos = routePointAt(r.path, r.t);
+  if (tpos) { fill('#a0f0f0'); rect(tpos.x, tpos.y, 4, 4); }
+  pop();
 }
+
+function routePointAt(path, t) {
+  if (path.length < 2) return null;
+  const seg = (path.length - 1) * t;
+  let i = floor(seg);
+  const local = seg - i;
+  if (i >= path.length - 1) i = path.length - 2;
+  const p1 = map.latLngToContainerPoint(L.latLng(path[i][1], path[i][0]));
+  const p2 = map.latLngToContainerPoint(L.latLng(path[i + 1][1], path[i + 1][0]));
+  return { x: lerp(p1.x, p2.x, local), y: lerp(p1.y, p2.y, local) };
+}
+
+// --- Floating text animation ---
+function rideRoute(r) {
+  push();
+  fill('#f8a5c2');
+  textSize(10);
+  textAlign(CENTER);
+  const tpos = routePointAt(r.path, r.t);
+  if (tpos) {
+    const chars = int(frameCount / 5) % (r.msg.length + 1);
+    text(`${r.name}: ${r.msg.substring(0, chars)}`, tpos.x, tpos.y - 10);
+  }
+  pop();
+}
+
+function windowResized() { resizeCanvas(window.innerWidth, window.innerHeight); }
+</script>
