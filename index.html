@@ -5,59 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Echoes in Transit</title>
 
-    <!-- Styles -->
+    <!-- 8-bit font -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+
+    <!-- Leaflet map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+
+    <!-- p5.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+
+    <!-- Style -->
     <link rel="stylesheet" href="style.css" />
-
-    <!-- p5.js + Leaflet -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    />
-
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore.js"></script>
-
-    <!-- Pixel font -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
-      rel="stylesheet"
-    />
   </head>
 
   <body>
-    <!-- Map layer -->
     <div id="map"></div>
 
-    <!-- UI panel -->
-    <div id="ui-panel">
+    <div id="ui">
       <h1>Echoes in Transit</h1>
 
-      <label>Line:</label>
-      <select id="lineSelect"></select>
+      <label for="lineSelect">Line:</label>
+      <select id="lineSelect"></select><br />
 
-      <label>Start Station:</label>
-      <select id="startSelect"></select>
+      <label for="startSelect">Start:</label>
+      <select id="startSelect"></select><br />
 
-      <label>End Station:</label>
-      <select id="endSelect"></select>
+      <label for="endSelect">End:</label>
+      <select id="endSelect"></select><br />
 
-      <label>Your Name:</label>
-      <input type="text" id="nameInput" placeholder="Enter your name" />
-
-      <label>Message:</label>
-      <textarea id="msgInput" placeholder="Your unsent message..."></textarea>
-
-      <div class="buttons">
-        <button id="sendBtn">Send</button>
-        <button id="rideBtn">Ride</button>
-        <button id="clearBtn">Clear</button>
-      </div>
+      <input type="text" id="msgInput" placeholder="Type your unsent message..." maxlength="100" />
+      <button id="sendBtn">Send</button>
+      <button id="clearBtn">Clear</button>
     </div>
 
-    <!-- p5.js sketch -->
+    <!-- p5 Sketch -->
     <script src="sketch.js"></script>
   </body>
 </html>
