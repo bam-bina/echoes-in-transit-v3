@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Echoes in Transit — Sydney</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- p5 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/addons/p5.sound.min.js"></script>
+
+  <!-- Firebase (compat for simpler migration) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="map"></div>
+
+  <div class="ui">
+    <div class="title">🚉 ECHOES IN TRANSIT — SYDNEY</div>
+
+    <label>Line
+      <select id="lineSelect"><option>Loading…</option></select>
+    </label>
+
+    <label>Start (sample)
+      <select id="startSelect"></select>
+    </label>
+
+    <label>End (sample)
+      <select id="endSelect"></select>
+    </label>
+
+    <label>Your name
+      <input id="nameInput" placeholder="Anonymous" />
+    </label>
+
+    <label>Message
+      <textarea id="msgInput" placeholder="type your unsent message..." rows="3"></textarea>
+    </label>
+
+    <div class="buttons">
+      <button id="sendBtn">SEND EMOTION</button>
+      <button id="rideBtn">RIDE</button>
+      <button id="clearBtn">CLEAR LOCAL</button>
+    </div>
+
+    <div class="hint">Tip: if GeoJSON fails to load from TfNSW, add <code>sydney_train_routes.json</code> to the project root.</div>
+  </div>
+
+  <!-- Main sketch -->
+  <script src="sketch.js" defer></script>
+</body>
+</html>

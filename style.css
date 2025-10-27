@@ -1,0 +1,36 @@
+/* Retro / 8-bit UI over map */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+html,body { height:100%; margin:0; font-family: 'Press Start 2P', monospace; background:#0b0b12; color:#f8f8f2; }
+#map { position: absolute; inset:0; z-index:0; }
+
+/* UI panel */
+.ui {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  width: 300px;
+  background: rgba(6,6,12,0.75);
+  border: 2px solid #ff80a0;
+  padding: 12px;
+  z-index: 2200;
+  border-radius: 8px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+}
+
+.title { color:#ffb0c0; font-size:13px; margin-bottom:8px; text-align:center; }
+
+label { display:block; margin:6px 0; font-size:10px; color:#f0e8f2; }
+select, input, textarea, button { font-family: inherit; font-size:11px; width:100%; box-sizing:border-box; padding:8px; background:#1a1a2a; color:#f8f8f2; border:1px solid #333; border-radius:4px; }
+textarea { resize:vertical; min-height:44px; max-height:120px; }
+
+.buttons { display:flex; gap:8px; margin-top:8px; }
+.buttons button { flex:1; cursor:pointer; background:#2a2a44; color:#f8f8f2; border:1px solid #444; }
+.buttons button:hover { background:#ff80a0; color:#000; }
+
+.hint { margin-top:8px; font-size:9px; color:#b6b6c4; }
+code { font-family: monospace; background:#111; padding:2px 4px; border-radius:3px; font-size:9px; color:#fff; }
+
+/* p5 canvas sits above map tiles but under UI */
+canvas { position:absolute; left:0; top:0; z-index:2000; pointer-events:none; } 
+/* pointer-events none keeps Leaflet interactive; we use UI for inputs */
