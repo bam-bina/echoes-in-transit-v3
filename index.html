@@ -13,7 +13,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/addons/p5.sound.min.js"></script>
 
-  <!-- Firebase (compat for simpler migration) -->
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -26,14 +26,14 @@
     <div class="title">🚉 ECHOES IN TRANSIT — SYDNEY</div>
 
     <label>Line
-      <select id="lineSelect"><option>Loading…</option></select>
+      <select id="lineSelect"></select>
     </label>
 
-    <label>Start (sample)
+    <label>Start Station
       <select id="startSelect"></select>
     </label>
 
-    <label>End (sample)
+    <label>End Station
       <select id="endSelect"></select>
     </label>
 
@@ -46,15 +46,13 @@
     </label>
 
     <div class="buttons">
-      <button id="sendBtn">SEND EMOTION</button>
+      <button id="sendBtn">SEND</button>
       <button id="rideBtn">RIDE</button>
-      <button id="clearBtn">CLEAR LOCAL</button>
+      <button id="clearBtn">CLEAR</button>
     </div>
-
-    <div class="hint">Tip: if GeoJSON fails to load from TfNSW, add <code>sydney_train_routes.json</code> to the project root.</div>
   </div>
 
-  <!-- Main sketch -->
   <script src="sketch.js" defer></script>
 </body>
 </html>
+
