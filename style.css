@@ -1,36 +1,91 @@
-/* Retro / 8-bit UI over map */
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-
-html,body { height:100%; margin:0; font-family: 'Press Start 2P', monospace; background:#0b0b12; color:#f8f8f2; }
-#map { position: absolute; inset:0; z-index:0; }
-
-/* UI panel */
-.ui {
-  position: absolute;
-  left: 14px;
-  top: 14px;
-  width: 300px;
-  background: rgba(6,6,12,0.75);
-  border: 2px solid #ff80a0;
-  padding: 12px;
-  z-index: 2200;
-  border-radius: 8px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: #000;
+  font-family: 'Press Start 2P', monospace;
+  color: #fff;
 }
 
-.title { color:#ffb0c0; font-size:13px; margin-bottom:8px; text-align:center; }
+#map {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
 
-label { display:block; margin:6px 0; font-size:10px; color:#f0e8f2; }
-select, input, textarea, button { font-family: inherit; font-size:11px; width:100%; box-sizing:border-box; padding:8px; background:#1a1a2a; color:#f8f8f2; border:1px solid #333; border-radius:4px; }
-textarea { resize:vertical; min-height:44px; max-height:120px; }
+#ui-panel {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 260px;
+  background: rgba(0,0,0,0.8);
+  padding: 15px;
+  border: 2px solid #f8a5c2;
+  border-radius: 10px;
+  z-index: 2;
+  box-shadow: 0 0 12px #f8a5c2;
+}
 
-.buttons { display:flex; gap:8px; margin-top:8px; }
-.buttons button { flex:1; cursor:pointer; background:#2a2a44; color:#f8f8f2; border:1px solid #444; }
-.buttons button:hover { background:#ff80a0; color:#000; }
+#ui-panel h1 {
+  font-size: 14px;
+  color: #f8a5c2;
+  text-align: center;
+  margin-bottom: 10px;
+  text-shadow: 0 0 5px #f8a5c2;
+}
 
-.hint { margin-top:8px; font-size:9px; color:#b6b6c4; }
-code { font-family: monospace; background:#111; padding:2px 4px; border-radius:3px; font-size:9px; color:#fff; }
+#ui-panel label {
+  font-size: 10px;
+  display: block;
+  margin-top: 10px;
+  margin-bottom: 3px;
+  color: #a0f0f0;
+}
 
-/* p5 canvas sits above map tiles but under UI */
-canvas { position:absolute; left:0; top:0; z-index:2000; pointer-events:none; } 
-/* pointer-events none keeps Leaflet interactive; we use UI for inputs */
+#ui-panel select,
+#ui-panel input,
+#ui-panel textarea {
+  width: 100%;
+  background: #111;
+  border: 1px solid #f8a5c2;
+  color: #fff;
+  font-size: 10px;
+  padding: 4px;
+  border-radius: 4px;
+  font-family: 'Press Start 2P', monospace;
+}
+
+#ui-panel textarea {
+  height: 50px;
+  resize: none;
+}
+
+.buttons {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+
+button {
+  flex: 1;
+  margin: 0 2px;
+  background: #f8a5c2;
+  color: #000;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  padding: 6px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+button:hover {
+  background: #a0f0f0;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
